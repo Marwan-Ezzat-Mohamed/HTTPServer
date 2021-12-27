@@ -32,8 +32,6 @@ namespace HTTPServer
         {
             throw new NotImplementedException();
             // TODO: Add headlines (Content-Type, Content-Length,Date, [location if there is redirection])
-
-
             // TODO: Create the request string
 
         }
