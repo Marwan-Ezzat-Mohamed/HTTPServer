@@ -11,10 +11,14 @@ namespace HTTPServer
         static void Main(string[] args)
         {
             // TODO: Call CreateRedirectionRulesFile() function to create the rules of redirection 
-            
+
+
             //Start server
             // 1) Make server object on port 1000
+            Server server = new Server(1000,"aboutus,aboutus2");
+            
             // 2) Start Server
+            server.StartServer();
         }
 
         static void CreateRedirectionRulesFile()

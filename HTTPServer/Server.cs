@@ -18,7 +18,7 @@ namespace HTTPServer
             //TODO: call this.LoadRedirectionRules passing redirectionMatrixPath to it
             this.LoadRedirectionRules(redirectionMatrixPath);
             //TODO: initialize this.serverSocket
-            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             serverSocket.Bind(new IPEndPoint(IPAddress.Any, portNumber));
         }
 
@@ -43,9 +43,9 @@ namespace HTTPServer
             // TODO: Create client socket 
             Socket clientSock = (Socket)obj;
 
-            string welcome = "Welcome to my test server";
-            byte[] data = Encoding.ASCII.GetBytes(welcome);
-            clientSock.Send(data);
+            // string welcome = "Welcome to my test server";
+            //byte[] data = Encoding.ASCII.GetBytes(welcome);
+            //clientSock.Send(data);
             // set client socket ReceiveTimeout = 0 to indicate an infinite time-out period
             clientSock.ReceiveTimeout = 0;
             // TODO: receive requests in while true until remote client closes the socket.
@@ -55,17 +55,22 @@ namespace HTTPServer
                 try
                 {
                     // TODO: Receive request
-                    data = new byte[1024];
+                    byte[] data = new byte[1024];
                     receivedLength = clientSock.Receive(data);
-                    // TODO: break the while loop if receivedLen==0
+
+                    string req = Encoding.ASCII.GetString(data);
+
+
+
+                    // todo: break the while loop if receivedlen==0
                     if (receivedLength == 0)
                     {
-                        Console.WriteLine("Client: {0} ended the connection", clientSock.RemoteEndPoint);
+                        Console.WriteLine("client: {0} ended the connection", clientSock.RemoteEndPoint);
 
                         break;
                     }
                     // TODO: Create a Request object using received request string
-                    Request request = new Request(data.ToString());
+                    Request request = new Request(req);
                     // TODO: Call HandleRequest Method that returns the response
                     Console.WriteLine("Received: {0} from Client: {1}“ ,Encoding.ASCII.GetString(data, 0, receivedLength), clientSock.RemoteEndPoint");
 
@@ -88,8 +93,8 @@ namespace HTTPServer
 
         Response HandleRequest(Request request)
         {
-            throw new NotImplementedException();
-            string content;
+            //throw new NotImplementedException();
+            string content = "";
             try
             {
                 //TODO: check for bad request 
@@ -135,6 +140,8 @@ namespace HTTPServer
                 content = LoadDefaultPage(Configuration.InternalErrorDefaultPageName);
                 return new Response(StatusCode.InternalServerError, contenttype, content, null);
             }
+
+            return new Response(StatusCode.InternalServerError, contenttype, content, null);
         }
 
         private string GetRedirectionPagePathIFExist(string relativePath)
@@ -162,23 +169,23 @@ namespace HTTPServer
 
         private void LoadRedirectionRules(string filePath)
         {
-            try
-            {
-                // TODO: using the filepath paramter read the redirection rules from file 
-                IEnumerable<string> lines = File.ReadLines(filePath);
-                foreach (string line in lines)
-                {
-                    string[] words = filePath.Split(',');
-                    // then fill Configuration.RedirectionRules dictionary 
-                    Configuration.RedirectionRules.Add(words[0], words[1]);
-                }
-            }
-            catch (Exception ex)
-            {
-                // TODO: log exception using Logger class
-                Logger.LogException(ex);
-                Environment.Exit(1);
-            }
+            //try
+            //{
+            //    // TODO: using the filepath paramter read the redirection rules from file 
+            //    IEnumerable<string> lines = File.ReadLines(filePath);
+            //    foreach (string line in lines)
+            //    {
+            //        string[] words = filePath.Split(',');
+            //        // then fill Configuration.RedirectionRules dictionary 
+            //        Configuration.RedirectionRules.Add(words[0], words[1]);
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    // TODO: log exception using Logger class
+            //    Logger.LogException(ex);
+            //    Environment.Exit(1);
+            //}
         }
     }
 }
