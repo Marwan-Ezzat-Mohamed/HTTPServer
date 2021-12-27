@@ -26,24 +26,39 @@ namespace HTTPServer
                 return responseString;
             }
         }
-        StatusCode code;
+        StatusCode statusCode;
         List<string> headerLines = new List<string>();
-        public Response(StatusCode code, string contentType, string content, string redirectoinPath)
+        public Response(StatusCode code, string contentType, string content, string redirectionPath)
         {
-            throw new NotImplementedException();
-            // TODO: Add headlines (Content-Type, Content-Length,Date, [location if there is redirection])
+            this.statusCode = code;
 
+            // throw new NotImplementedException();
+            //Add headlines (Content-Type, Content-Length,Date, [location if there is redirection])
+            headerLines.Add("Content-Type:" + contentType);
+            headerLines.Add("Content-Length:" + content.Length);
+            headerLines.Add("Date:" + DateTime.Now.ToString());
+            if (redirectionPath != null)
+                headerLines.Add("Location:" + redirectionPath);
 
-            // TODO: Create the request string
+            //Add the status code
+            responseString = GetStatusLine(code).ToString() + "\r\n";
+
+            //Add the header lines
+            foreach (string line in headerLines)
+            {
+                responseString += line + "\r\n";
+            }
+
+            //Add the content
+            responseString += "\r\n";
+            responseString += content;
 
         }
 
         private string GetStatusLine(StatusCode code)
         {
             // TODO: Create the response status line and return it
-            string statusLine = string.Empty;
-
-            return statusLine;
+            return (int)code + " " + code.ToString();
         }
     }
 }
