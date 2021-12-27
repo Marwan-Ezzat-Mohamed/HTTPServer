@@ -61,6 +61,7 @@ namespace HTTPServer
                     if (receivedLength == 0)
                     {
                         Console.WriteLine("Client: {0} ended the connection", clientSock.RemoteEndPoint);
+
                         break;
                     }
                     // TODO: Create a Request object using received request string
