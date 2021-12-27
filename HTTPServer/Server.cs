@@ -43,9 +43,11 @@ namespace HTTPServer
             // TODO: Create client socket 
             Socket clientSock = (Socket)obj;
 
+            // string welcome = "Welcome to my test server";
+            //byte[] data = Encoding.ASCII.GetBytes(welcome);
+            //clientSock.Send(data);
             // set client socket ReceiveTimeout = 0 to indicate an infinite time-out period
             clientSock.ReceiveTimeout = 0;
-
             // TODO: receive requests in while true until remote client closes the socket.
             int receivedLength;
             while (true)
@@ -69,14 +71,21 @@ namespace HTTPServer
                     // TODO: Create a Request object using received request string
                     Request request = new Request(req);
 
-
-                    Console.WriteLine("client: {0} sent request: {1}", req);
-                    // TODO: Call HandleRequest Method that returns the response
                     Response response = HandleRequest(request);
+
+
+                    Console.WriteLine("req {0}" + req);
+
+                    // TODO: Call HandleRequest Method that returns the response
+                    Console.WriteLine("Received: {0} from Client: {1}" + response.ResponseString);
 
                     // TODO: Send Response back to client
                     byte[] responseBytes = Encoding.ASCII.GetBytes(response.ResponseString);
                     clientSock.Send(responseBytes);
+
+
+                    //clientSock.Send(responseBytes, 0, receivedLength, SocketFlags.None);
+
 
                 }
                 catch (Exception ex)
@@ -84,14 +93,10 @@ namespace HTTPServer
                     // TODO: log exception using Logger class
                     Logger.LogException(ex);
                 }
-                finally
-                {
-                    // TODO: close client socket
-                    clientSock.Close();
-                }
+            // TODO: close client socket
+            clientSock.Close();
 
             }
-
 
         }
 
@@ -106,6 +111,14 @@ namespace HTTPServer
                 {
                     content = LoadDefaultPage(Configuration.BadRequestDefaultPageName);
                     return new Response(StatusCode.BadRequest, contenttype, content, null);
+                }
+                Console.WriteLine("zft {0} {1}: " + Configuration.RedirectionRules.ContainsKey("aboutus.html") + request.relativeURI);
+
+
+                //print the redirection rules
+                foreach (KeyValuePair<string, string> kvp in Configuration.RedirectionRules)
+                {
+                    Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
                 }
 
 
