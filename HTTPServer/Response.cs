@@ -41,7 +41,7 @@ namespace HTTPServer
                 headerLines.Add("Location:" + redirectionPath);
 
             //Add the status code
-            responseString = GetStatusLine(code).ToString() + "\r\n";
+            responseString = "HTTP/1.1 "+GetStatusLine(code).ToString() + "\r\n";
 
             //Add the header lines
             foreach (string line in headerLines)

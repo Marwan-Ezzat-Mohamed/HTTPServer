@@ -13,10 +13,10 @@ namespace HTTPServer
     {
         Socket serverSocket;
         string contenttype = "text/html";
-        public Server(int portNumber, string redirectionMatrixPath)
+        public Server(int portNumber, string redirectionFilePath)
         {
             //TODO: call this.LoadRedirectionRules passing redirectionMatrixPath to it
-            this.LoadRedirectionRules(redirectionMatrixPath);
+            this.LoadRedirectionRules(redirectionFilePath);
             //TODO: initialize this.serverSocket
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             serverSocket.Bind(new IPEndPoint(IPAddress.Any, portNumber));
@@ -43,11 +43,9 @@ namespace HTTPServer
             // TODO: Create client socket 
             Socket clientSock = (Socket)obj;
 
-            // string welcome = "Welcome to my test server";
-            //byte[] data = Encoding.ASCII.GetBytes(welcome);
-            //clientSock.Send(data);
             // set client socket ReceiveTimeout = 0 to indicate an infinite time-out period
             clientSock.ReceiveTimeout = 0;
+
             // TODO: receive requests in while true until remote client closes the socket.
             int receivedLength;
             while (true)
@@ -66,17 +64,19 @@ namespace HTTPServer
                     if (receivedLength == 0)
                     {
                         Console.WriteLine("client: {0} ended the connection", clientSock.RemoteEndPoint);
-
                         break;
                     }
                     // TODO: Create a Request object using received request string
                     Request request = new Request(req);
+
+
+                    Console.WriteLine("client: {0} sent request: {1}", req);
                     // TODO: Call HandleRequest Method that returns the response
-                    Console.WriteLine("Received: {0} from Client: {1}“ ,Encoding.ASCII.GetString(data, 0, receivedLength), clientSock.RemoteEndPoint");
+                    Response response = HandleRequest(request);
 
                     // TODO: Send Response back to client
-                    clientSock.Send(data, 0, receivedLength, SocketFlags.None);
-
+                    byte[] responseBytes = Encoding.ASCII.GetBytes(response.ResponseString);
+                    clientSock.Send(responseBytes);
 
                 }
                 catch (Exception ex)
@@ -84,10 +84,14 @@ namespace HTTPServer
                     // TODO: log exception using Logger class
                     Logger.LogException(ex);
                 }
+                finally
+                {
+                    // TODO: close client socket
+                    clientSock.Close();
+                }
+
             }
 
-            // TODO: close client socket
-            clientSock.Close();
 
         }
 
@@ -103,11 +107,13 @@ namespace HTTPServer
                     content = LoadDefaultPage(Configuration.BadRequestDefaultPageName);
                     return new Response(StatusCode.BadRequest, contenttype, content, null);
                 }
+
+
                 //TODO: map the relativeURI in request to get the physical path of the resource.
                 //TODO: check for redirect
-                else if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
+                if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
                 {
-                    content = LoadDefaultPage(GetRedirectionPagePathIFExist(Configuration.RedirectionRules[request.relativeURI]));
+                    content = LoadDefaultPage(Configuration.RedirectionDefaultPageName);
                     return new Response(StatusCode.Redirect, contenttype, content, Configuration.RedirectionRules[request.relativeURI]);
                 }
                 //TODO: check file exists
@@ -121,37 +127,42 @@ namespace HTTPServer
                 }
                 //TODO: read the physical file
                 // Create OK response
-                else if (content != string.Empty)
+                else if (request.relativeURI != string.Empty)
                 {
-                    content = LoadDefaultPage(request.relativeURI);
-                    return new Response(StatusCode.OK, contenttype, content, null);
+                    if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
+                    {
+                        content = LoadDefaultPage(request.relativeURI);
+                        return new Response(StatusCode.OK, contenttype, content, null);
+                    }
+                    else
+                    {
+                        content = LoadDefaultPage(Configuration.NotFoundDefaultPageName);
+                        return new Response(StatusCode.NotFound, contenttype, content, null);
+                    }
+
                 }
-                else
-                {
-                    content = LoadDefaultPage(Configuration.NotFoundDefaultPageName);
-                    return new Response(StatusCode.NotFound, contenttype, content, null);
-                }
+
             }
             catch (Exception ex)
             {
                 // TODO: log exception using Logger class
                 Logger.LogException(ex);
                 // TODO: in case of exception, return Internal Server Error. 
-                content = LoadDefaultPage(Configuration.InternalErrorDefaultPageName);
+                //content = LoadDefaultPage(Configuration.InternalErrorDefaultPageName);
                 return new Response(StatusCode.InternalServerError, contenttype, content, null);
             }
 
             return new Response(StatusCode.InternalServerError, contenttype, content, null);
         }
 
-        private string GetRedirectionPagePathIFExist(string relativePath)
-        {
-            // using Configuration.RedirectionRules return the redirected page path if exists else returns empty
-            if (File.Exists(Configuration.RedirectionRules[relativePath]))
-                return Configuration.RedirectionRules[relativePath];
-            else
-                return string.Empty;
-        }
+        // private string GetRedirectionPagePathIFExist(string relativePath)
+        // {
+        //     // using Configuration.RedirectionRules return the redirected page path if exists else returns empty
+        //     if (File.Exists(Configuration.RootPath + "/" + Configuration.RedirectionRules[relativePath]))
+        //         return Configuration.RedirectionRules[relativePath];
+        //     else
+        //         return string.Empty;
+        // }
 
         private string LoadDefaultPage(string defaultPageName)
         {
@@ -169,23 +180,26 @@ namespace HTTPServer
 
         private void LoadRedirectionRules(string filePath)
         {
-            //try
-            //{
-            //    // TODO: using the filepath paramter read the redirection rules from file 
-            //    IEnumerable<string> lines = File.ReadLines(filePath);
-            //    foreach (string line in lines)
-            //    {
-            //        string[] words = filePath.Split(',');
-            //        // then fill Configuration.RedirectionRules dictionary 
-            //        Configuration.RedirectionRules.Add(words[0], words[1]);
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    // TODO: log exception using Logger class
-            //    Logger.LogException(ex);
-            //    Environment.Exit(1);
-            //}
+            try
+            {
+                //  using the filepath parametr read the redirection rules from file 
+                // and add them to Configuration.RedirectionRules
+                string[] lines = File.ReadAllLines(filePath);
+                foreach (string line in lines)
+                {
+                    string[] parts = line.Split(',');
+                    if (parts.Length == 2)
+                    {
+                        Configuration.RedirectionRules.Add(parts[0], parts[1]);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO: log exception using Logger class
+                Logger.LogException(ex);
+                Environment.Exit(1);
+            }
         }
     }
 }

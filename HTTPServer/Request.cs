@@ -45,7 +45,7 @@ namespace HTTPServer
         /// <returns>True if parsing succeeds, false otherwise.</returns>
         public bool ParseRequest()
         {
-            throw new NotImplementedException();
+            // throw new NotImplementedException();
 
             //TODO: parse the receivedRequest using the \r\n delimeter  
 
@@ -71,8 +71,8 @@ namespace HTTPServer
                 return false;
             else
             {
-                 requestLines = contentLines[0].Split(' ');
-                if (requestLines.Length != 3) return false;
+                requestLines = contentLines[0].Split(' ');
+                //if (requestLines.Length != 3) return false;
                 switch (requestLines[0])
                 {
                     case "GET":
@@ -87,7 +87,7 @@ namespace HTTPServer
                 }
                 if (!ValidateIsURI(requestLines[1]))
                     return false;
-                    relativeURI = requestLines[1].Remove(0, 1);
+                relativeURI = requestLines[1].Remove(0, 1);
                 switch (requestLines[2])
                 {
                     case "HTTP/1.1":
@@ -103,7 +103,7 @@ namespace HTTPServer
             }
             return true;
 
-           // throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
 
         private bool ValidateIsURI(string uri)
@@ -115,9 +115,9 @@ namespace HTTPServer
         {
             string[] array = new string[] { ":" };
             headerLines = new Dictionary<string, string>();
-            for(int i=1;i<contentLines[i].Length;i++)
+            for (int i = 1; i < contentLines[i].Length; i++)
             {
-                string[] array2= contentLines[i].Split(array,StringSplitOptions.RemoveEmptyEntries);
+                string[] array2 = contentLines[i].Split(array, StringSplitOptions.RemoveEmptyEntries);
                 headerLines.Add(array2[0], array2[1]);
 
             }
