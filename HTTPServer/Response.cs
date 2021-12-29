@@ -41,7 +41,7 @@ namespace HTTPServer
                 headerLines.Add("Location:" + redirectionPath);
 
             //Add the status code
-            responseString = "HTTP/1.1 "+GetStatusLine(code).ToString() + "\r\n";
+            responseString = Configuration.ServerHTTPVersion + " " + GetStatusLine(code).ToString() + "\r\n";
 
             //Add the header lines
             foreach (string line in headerLines)
@@ -59,6 +59,7 @@ namespace HTTPServer
         {
             // TODO: Create the response status line and return it
             return (int)code + " " + code.ToString();
+
         }
     }
 }

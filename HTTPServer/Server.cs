@@ -85,16 +85,14 @@ namespace HTTPServer
 
 
                     //clientSock.Send(responseBytes, 0, receivedLength, SocketFlags.None);
-
-
                 }
                 catch (Exception ex)
                 {
                     // TODO: log exception using Logger class
                     Logger.LogException(ex);
                 }
-            // TODO: close client socket
-            clientSock.Close();
+                // TODO: close client socket
+                clientSock.Close();
 
             }
 
@@ -109,50 +107,20 @@ namespace HTTPServer
                 //TODO: check for bad request 
                 if (!request.ParseRequest())
                 {
-                    content = LoadDefaultPage(Configuration.BadRequestDefaultPageName);
+                    content = LoadPage(Configuration.BadRequestDefaultPageName);
                     return new Response(StatusCode.BadRequest, contenttype, content, null);
                 }
-                Console.WriteLine("zft {0} {1}: " + Configuration.RedirectionRules.ContainsKey("aboutus.html") + request.relativeURI);
 
-
-                //print the redirection rules
-                foreach (KeyValuePair<string, string> kvp in Configuration.RedirectionRules)
+                switch (request.method.ToString())
                 {
-                    Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-                }
-
-
-                //TODO: map the relativeURI in request to get the physical path of the resource.
-                //TODO: check for redirect
-                if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
-                {
-                    content = LoadDefaultPage(Configuration.RedirectionDefaultPageName);
-                    return new Response(StatusCode.Redirect, contenttype, content, Configuration.RedirectionRules[request.relativeURI]);
-                }
-                //TODO: check file exists
-                if (request.relativeURI == string.Empty)
-                {
-                    if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
-                    {
-                        content = LoadDefaultPage(Configuration.MainPage);
-                        return new Response(StatusCode.OK, contenttype, content, null);
-                    }
-                }
-                //TODO: read the physical file
-                // Create OK response
-                else if (request.relativeURI != string.Empty)
-                {
-                    if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
-                    {
-                        content = LoadDefaultPage(request.relativeURI);
-                        return new Response(StatusCode.OK, contenttype, content, null);
-                    }
-                    else
-                    {
-                        content = LoadDefaultPage(Configuration.NotFoundDefaultPageName);
-                        return new Response(StatusCode.NotFound, contenttype, content, null);
-                    }
-
+                    case "GET":
+                        return handleGetMethod(request);
+                    case "POST":
+                        return handlePostMethod(request);
+                    case "HEAD":
+                        return handleHeadMethod(request);
+                    default:
+                        break;
                 }
 
             }
@@ -177,9 +145,89 @@ namespace HTTPServer
         //         return string.Empty;
         // }
 
-        private string LoadDefaultPage(string defaultPageName)
+
+
+
+
+
+        public Response handlePostMethod(Request request)
         {
-            string filePath = Path.Combine(Configuration.RootPath, defaultPageName);
+            string content = "";
+            try
+            {
+                if (request.relativeURI.Equals("api"))
+                {
+                    content = request.body;
+                    writeToRequestsFile(content);
+                    return new Response(StatusCode.OK, contenttype, content, null);
+                }
+                else
+                {
+                    return new Response(StatusCode.NotFound, contenttype, content, null);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new Response(StatusCode.InternalServerError, contenttype, "", null);
+            }
+
+        }
+        public Response handleHeadMethod(Request request)
+        {
+            return null;
+        }
+        public Response handleGetMethod(Request request)
+        {
+            string content = "";
+
+            if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
+            {
+                content = LoadPage(Configuration.RedirectionDefaultPageName);
+                return new Response(StatusCode.Redirect, contenttype, content, Configuration.RedirectionRules[request.relativeURI]);
+            }
+            //TODO: check file exists
+            if (request.relativeURI == string.Empty)
+            {
+                if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
+                {
+                    content = LoadPage(Configuration.MainPage);
+                    return new Response(StatusCode.OK, contenttype, content, null);
+                }
+            }
+            //TODO: read the physical file
+            // Create OK response
+            else if (request.relativeURI != string.Empty)
+            {
+                if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
+                {
+                    content = LoadPage(request.relativeURI);
+                    return new Response(StatusCode.OK, contenttype, content, null);
+                }
+                else
+                {
+                    content = LoadPage(Configuration.NotFoundDefaultPageName);
+                    return new Response(StatusCode.NotFound, contenttype, content, null);
+                }
+            }
+            return new Response(StatusCode.InternalServerError, contenttype, content, null);
+        }
+
+
+        //utils
+        private void writeToRequestsFile(string content)
+        {
+            //read the file
+            string path = Configuration.RootPath + "/" + Configuration.RequestBodyFileName;
+            string file = File.ReadAllText(path);
+            file = file.Replace("<body>", "<body>" + "<h1>" + content + "</h1>" + "<br>");
+            //write the file
+            File.WriteAllText(path, file);
+
+        }
+        private string LoadPage(string pageName)
+        {
+            string filePath = Path.Combine(Configuration.RootPath, pageName);
             // TODO: check if filepath not exist log exception using Logger class and return empty string
             if (!File.Exists(filePath))
             {
@@ -188,7 +236,6 @@ namespace HTTPServer
             }
             // else read file and return its content
             return File.ReadAllText(filePath);
-
         }
 
         private void LoadRedirectionRules(string filePath)

@@ -22,7 +22,7 @@ namespace HTTPServer
     class Request
     {
         string[] requestLines;
-        RequestMethod method;
+        public RequestMethod method;
         public string relativeURI;
         Dictionary<string, string> headerLines;
 
@@ -34,6 +34,8 @@ namespace HTTPServer
         HTTPVersion httpVersion;
         string requestString;
         string[] contentLines;
+
+        public string body = "";
 
         public Request(string requestString)
         {
@@ -56,8 +58,10 @@ namespace HTTPServer
             // Validate blank line exists
 
             // Load header lines into HeaderLines dictionary
-            if (ParseRequestLine() || LoadHeaderLines() || ValidateBlankLine())
+            
+            if (ParseRequestLine() && LoadHeaderLines() && ValidateBlankLine())
             {
+
                 return true;
             }
             else
@@ -67,12 +71,13 @@ namespace HTTPServer
         private bool ParseRequestLine()
         {
             contentLines = requestString.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            body = contentLines[contentLines.Length - 1];
             if (contentLines.Length < 4)
                 return false;
             else
             {
                 requestLines = contentLines[0].Split(' ');
-                //if (requestLines.Length != 3) return false;
+
                 switch (requestLines[0])
                 {
                     case "GET":
@@ -113,22 +118,28 @@ namespace HTTPServer
 
         private bool LoadHeaderLines()
         {
-            string[] array = new string[] { ":" };
+            string[] separatingStrings = { ":" };
             headerLines = new Dictionary<string, string>();
             for (int i = 1; i < contentLines[i].Length; i++)
             {
-                string[] array2 = contentLines[i].Split(array, StringSplitOptions.RemoveEmptyEntries);
+                string[] array2 = contentLines[i].Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
+                if (array2.Length < 2) break;
                 headerLines.Add(array2[0], array2[1]);
 
             }
-            return array.Length > 1;
-            //throw new NotImplementedException();
+            return headerLines.Count > 1;
         }
 
         private bool ValidateBlankLine()
         {
-            return requestString.EndsWith("\r\n\r\n");
-            //throw new NotImplementedException();
+            for (int i = 0; i < requestString.Length; i++)
+            {
+                if (requestString[i] == '\r' && requestString[i + 1] == '\n')
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }
