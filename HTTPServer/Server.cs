@@ -159,23 +159,54 @@ namespace HTTPServer
                 {
                     content = request.body;
                     writeToRequestsFile(content);
-                    return new Response(StatusCode.OK, contenttype, content, null);
+                    return new Response(StatusCode.OK, contenttype,  null,content);
                 }
                 else
                 {
-                    return new Response(StatusCode.NotFound, contenttype, content, null);
+                    return new Response(StatusCode.NotFound, contenttype, null, content);
                 }
 
             }
             catch (Exception ex)
             {
-                return new Response(StatusCode.InternalServerError, contenttype, "", null);
+                return new Response(StatusCode.InternalServerError, contenttype, null, "");
             }
 
         }
         public Response handleHeadMethod(Request request)
         {
-            return null;
+           
+
+            if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
+            {
+               
+                return new Response(StatusCode.Redirect, contenttype,null, Configuration.RedirectionRules[request.relativeURI]);
+            }
+            //TODO: check file exists
+            if (request.relativeURI == string.Empty)
+            {
+                if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
+                {
+                    
+                    return new Response(StatusCode.OK, contenttype, null, null);
+                }
+            }
+            //TODO: read the physical file
+            // Create OK response
+            else if (request.relativeURI != string.Empty)
+            {
+                if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
+                {
+                    
+                    return new Response(StatusCode.OK, contenttype, null, null);
+                }
+                else
+                {
+                    
+                    return new Response(StatusCode.NotFound, contenttype, null, null);
+                }
+            }
+            return new Response(StatusCode.InternalServerError, contenttype, null, null);
         }
         public Response handleGetMethod(Request request)
         {
@@ -184,7 +215,7 @@ namespace HTTPServer
             if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
             {
                 content = LoadPage(Configuration.RedirectionDefaultPageName);
-                return new Response(StatusCode.Redirect, contenttype, content, Configuration.RedirectionRules[request.relativeURI]);
+                return new Response(StatusCode.Redirect, contenttype, Configuration.RedirectionRules[request.relativeURI], content);
             }
             //TODO: check file exists
             if (request.relativeURI == string.Empty)
@@ -192,7 +223,7 @@ namespace HTTPServer
                 if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
                 {
                     content = LoadPage(Configuration.MainPage);
-                    return new Response(StatusCode.OK, contenttype, content, null);
+                    return new Response(StatusCode.OK, contenttype, null, content);
                 }
             }
             //TODO: read the physical file
@@ -202,15 +233,15 @@ namespace HTTPServer
                 if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
                 {
                     content = LoadPage(request.relativeURI);
-                    return new Response(StatusCode.OK, contenttype, content, null);
+                    return new Response(StatusCode.OK, contenttype, null, content);
                 }
                 else
                 {
                     content = LoadPage(Configuration.NotFoundDefaultPageName);
-                    return new Response(StatusCode.NotFound, contenttype, content, null);
+                    return new Response(StatusCode.NotFound, contenttype, null, content);
                 }
             }
-            return new Response(StatusCode.InternalServerError, contenttype, content, null);
+            return new Response(StatusCode.InternalServerError, contenttype, null, content);
         }
 
 

@@ -16,7 +16,7 @@ namespace HTTPServer
 
             //Start server
             // 1) Make server object on port 1000
-            Server server = new Server(1000, "C:\\Users\\MarwanEzzat\\Downloads\\Template2021-2022\\Template[2021-2022]\\HTTPServer\\bin\\Debug\\redirectionRules.txt");
+            Server server = new Server(1000, "C:\\Users\\dell\\source\\repos\\HTTPServer\\HTTPServer\\bin\\Debug\\redirectionRules.txt");
 
             // 2) Start Server
             server.StartServer();

@@ -28,7 +28,7 @@ namespace HTTPServer
         }
         StatusCode statusCode;
         List<string> headerLines = new List<string>();
-        public Response(StatusCode code, string contentType, string content, string redirectionPath)
+        public Response(StatusCode code, string contentType, string redirectionPath,string content="")
         {
             this.statusCode = code;
 
