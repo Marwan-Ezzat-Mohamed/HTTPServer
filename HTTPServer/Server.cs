@@ -180,7 +180,7 @@ namespace HTTPServer
             if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
             {
                
-                return new Response(StatusCode.Redirect, contenttype,null, Configuration.RedirectionRules[request.relativeURI]);
+                return new Response(StatusCode.Redirect, contenttype, Configuration.RedirectionRules[request.relativeURI],"");
             }
             //TODO: check file exists
             if (request.relativeURI == string.Empty)
@@ -188,7 +188,7 @@ namespace HTTPServer
                 if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
                 {
                     
-                    return new Response(StatusCode.OK, contenttype, null, null);
+                    return new Response(StatusCode.OK, contenttype, null, " ");
                 }
             }
             //TODO: read the physical file
@@ -198,15 +198,15 @@ namespace HTTPServer
                 if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
                 {
                     
-                    return new Response(StatusCode.OK, contenttype, null, null);
+                    return new Response(StatusCode.OK, contenttype, null, "");
                 }
                 else
                 {
                     
-                    return new Response(StatusCode.NotFound, contenttype, null, null);
+                    return new Response(StatusCode.NotFound, contenttype, null, "");
                 }
             }
-            return new Response(StatusCode.InternalServerError, contenttype, null, null);
+            return new Response(StatusCode.InternalServerError, contenttype, null, "");
         }
         public Response handleGetMethod(Request request)
         {

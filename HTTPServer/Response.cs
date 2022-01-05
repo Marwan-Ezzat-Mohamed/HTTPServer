@@ -49,9 +49,12 @@ namespace HTTPServer
                 responseString += line + "\r\n";
             }
 
-            //Add the content
+            if(content !=" ")
+
+            { //Add the content
             responseString += "\r\n";
-            responseString += content;
+            responseString += content;}
+            
 
         }
 

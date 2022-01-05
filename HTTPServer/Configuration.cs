@@ -11,7 +11,7 @@ namespace HTTPServer
         public static string ServerType = "FCISServer";
         public static string ApiDefaultPageName = "api";
         public static Dictionary<string, string> RedirectionRules = new Dictionary<string, string>();
-        public static string RootPath = "D:\\inetpub\\wwwroot\\fcis1";
+        public static string RootPath = "C:\\inetpub\\inetpub\\wwwroot\\fcis1";
         public static string RequestBodyFileName = "Requests.html";
         public static string RedirectionDefaultPageName = "Redirect.html";
         public static string BadRequestDefaultPageName = "BadRequest.html";
