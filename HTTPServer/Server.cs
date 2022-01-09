@@ -15,21 +15,21 @@ namespace HTTPServer
         string contenttype = "text/html";
         public Server(int portNumber, string redirectionFilePath)
         {
-            //TODO: call this.LoadRedirectionRules passing redirectionMatrixPath to it
+            //call this.LoadRedirectionRules passing redirectionMatrixPath to it
             this.LoadRedirectionRules(redirectionFilePath);
-            //TODO: initialize this.serverSocket
+            //initialize this.serverSocket
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             serverSocket.Bind(new IPEndPoint(IPAddress.Any, portNumber));
         }
 
         public void StartServer()
         {
-            // TODO: Listen to connections, with large backlog.
-            serverSocket.Listen(100);
-            // TODO: Accept connections in while loop and start a thread for each connection on function "Handle Connection"
+            // Listen to connections, with large backlog.
+            serverSocket.Listen(1000);
+            // Accept connections in while loop and start a thread for each connection on function "Handle Connection"
             while (true)
             {
-                //TODO: accept connections and start thread for each accepted connection.
+                //accept connections and start thread for each accepted connection.
                 Socket clientSocket = this.serverSocket.Accept();
                 Console.WriteLine("New Client accepted ; {0}", clientSocket.RemoteEndPoint);
                 Thread newthread = new Thread(new ParameterizedThreadStart(HandleConnection));
@@ -40,46 +40,42 @@ namespace HTTPServer
 
         public void HandleConnection(object obj)
         {
-            // TODO: Create client socket 
+            // Create client socket 
             Socket clientSock = (Socket)obj;
 
-            // string welcome = "Welcome to my test server";
-            //byte[] data = Encoding.ASCII.GetBytes(welcome);
-            //clientSock.Send(data);
             // set client socket ReceiveTimeout = 0 to indicate an infinite time-out period
             clientSock.ReceiveTimeout = 0;
-            // TODO: receive requests in while true until remote client closes the socket.
-            int receivedLength;
+            // receive requests in while true until remote client closes the socket.
+
+
             while (true)
             {
                 try
                 {
-                    // TODO: Receive request
+                    // Receive request
                     byte[] data = new byte[1024];
-                    receivedLength = clientSock.Receive(data);
+                    int receivedLength = clientSock.Receive(data);
 
-                    string req = Encoding.ASCII.GetString(data);
-
-
-
-                    // todo: break the while loop if receivedlen==0
+                    // break the while loop if receivedlen==0
                     if (receivedLength == 0)
                     {
                         Console.WriteLine("client: {0} ended the connection", clientSock.RemoteEndPoint);
                         break;
                     }
-                    // TODO: Create a Request object using received request string
+
+                    string req = Encoding.ASCII.GetString(data);
+                    // Create a Request object using received request string
                     Request request = new Request(req);
 
+                    // Call HandleRequest Method that returns the response
                     Response response = HandleRequest(request);
 
 
                     Console.WriteLine("req {0}" + req);
 
-                    // TODO: Call HandleRequest Method that returns the response
-                    Console.WriteLine("Received: {0} from Client: {1}" + response.ResponseString);
+                    //Console.WriteLine("Received: {0} from Client: {1}" + response.ResponseString);
 
-                    // TODO: Send Response back to client
+                    // Send Response back to client
                     byte[] responseBytes = Encoding.ASCII.GetBytes(response.ResponseString);
                     clientSock.Send(responseBytes);
 
@@ -88,27 +84,25 @@ namespace HTTPServer
                 }
                 catch (Exception ex)
                 {
-                    // TODO: log exception using Logger class
                     Logger.LogException(ex);
                 }
-                // TODO: close client socket
-                clientSock.Close();
-
             }
+            // close client socket
+            clientSock.Close();
 
         }
 
         Response HandleRequest(Request request)
         {
-            //throw new NotImplementedException();
-            string content = "";
+
+            string content = string.Empty;
             try
             {
-                //TODO: check for bad request 
+                //check for bad request 
                 if (!request.ParseRequest())
                 {
-                    content = LoadPage(Configuration.BadRequestDefaultPageName);
-                    return new Response(StatusCode.BadRequest, contenttype, content, null);
+                    content = LoadDefaultPage(Configuration.BadRequestDefaultPageName);
+                    return new Response(StatusCode.BadRequest, contenttype, content, string.Empty);
                 }
 
                 switch (request.method.ToString())
@@ -120,46 +114,30 @@ namespace HTTPServer
                     case "HEAD":
                         return handleHeadMethod(request);
                     default:
-                        break;
+                        return new Response(StatusCode.InternalServerError, contenttype, null, content); ;
                 }
 
             }
             catch (Exception ex)
             {
-                // TODO: log exception using Logger class
                 Logger.LogException(ex);
-                // TODO: in case of exception, return Internal Server Error. 
-                //content = LoadDefaultPage(Configuration.InternalErrorDefaultPageName);
-                return new Response(StatusCode.InternalServerError, contenttype, content, null);
+                // in case of exception, return Internal Server Error. 
+                return new Response(StatusCode.InternalServerError, contenttype, null, content);
             }
 
-            return new Response(StatusCode.InternalServerError, contenttype, content, null);
         }
-
-        // private string GetRedirectionPagePathIFExist(string relativePath)
-        // {
-        //     // using Configuration.RedirectionRules return the redirected page path if exists else returns empty
-        //     if (File.Exists(Configuration.RootPath + "/" + Configuration.RedirectionRules[relativePath]))
-        //         return Configuration.RedirectionRules[relativePath];
-        //     else
-        //         return string.Empty;
-        // }
-
-
-
-
-
 
         public Response handlePostMethod(Request request)
         {
-            string content = "";
+            string postURL = "";
+            string content = string.Empty;
             try
             {
-                if (request.relativeURI.Equals("api"))
+                if (request.relativeURI.Equals(postURL))
                 {
                     content = request.body;
                     writeToRequestsFile(content);
-                    return new Response(StatusCode.OK, contenttype,  null,content);
+                    return new Response(StatusCode.OK, contenttype, null, content);
                 }
                 else
                 {
@@ -169,79 +147,92 @@ namespace HTTPServer
             }
             catch (Exception ex)
             {
-                return new Response(StatusCode.InternalServerError, contenttype, null, "");
+                Logger.LogException(ex);
+                // in case of exception, return Internal Server Error. 
+                content = LoadDefaultPage(Configuration.InternalErrorDefaultPageName);
+                return new Response(StatusCode.InternalServerError, contenttype, null, content);
             }
 
         }
+
         public Response handleHeadMethod(Request request)
         {
-           
 
-            if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
+            try
             {
-               
-                return new Response(StatusCode.Redirect, contenttype, Configuration.RedirectionRules[request.relativeURI],"");
-            }
-            //TODO: check file exists
-            if (request.relativeURI == string.Empty)
-            {
-                if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
+                string redirectionPagePath = GetRedirectionPagePathIFExist(request.relativeURI);
+                if (redirectionPagePath != string.Empty)
                 {
-                    
-                    return new Response(StatusCode.OK, contenttype, null, " ");
+                    return new Response(StatusCode.Redirect, "text/html", redirectionPagePath, LoadDefaultPage(Configuration.RedirectionDefaultPageName));
                 }
-            }
-            //TODO: read the physical file
-            // Create OK response
-            else if (request.relativeURI != string.Empty)
-            {
-                if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
+
+                if (request.relativeURI == string.Empty)
                 {
-                    
-                    return new Response(StatusCode.OK, contenttype, null, "");
+                    return new Response(StatusCode.OK, contenttype, null, string.Empty);
                 }
+                //read the physical file
+                // Create OK response
                 else
                 {
-                    
-                    return new Response(StatusCode.NotFound, contenttype, null, "");
+                    string requestedFilePath = Path.Combine(Configuration.RootPath, request.relativeURI);
+                    if (File.Exists(requestedFilePath))
+                    {
+                        return new Response(StatusCode.OK, contenttype, null, string.Empty);
+                    }
+                    else
+                    {
+                        return new Response(StatusCode.NotFound, contenttype, null, string.Empty);
+                    }
                 }
             }
-            return new Response(StatusCode.InternalServerError, contenttype, null, "");
+            catch (Exception ex)
+            {
+                Logger.LogException(ex);
+                // in case of exception, return Internal Server Error.
+                return new Response(StatusCode.InternalServerError, contenttype, null, string.Empty);
+            }
+
         }
         public Response handleGetMethod(Request request)
         {
-            string content = "";
-
-            if (Configuration.RedirectionRules.ContainsKey(request.relativeURI))
+            string content = string.Empty;
+            try
             {
-                content = LoadPage(Configuration.RedirectionDefaultPageName);
-                return new Response(StatusCode.Redirect, contenttype, Configuration.RedirectionRules[request.relativeURI], content);
-            }
-            //TODO: check file exists
-            if (request.relativeURI == string.Empty)
-            {
-                if (File.Exists(Path.Combine(Configuration.RootPath, Configuration.MainPage)))
+                //throw new Exception("123");
+                string RedirectionPagePath = GetRedirectionPagePathIFExist(request.relativeURI);
+                if (RedirectionPagePath != string.Empty)
                 {
-                    content = LoadPage(Configuration.MainPage);
-                    return new Response(StatusCode.OK, contenttype, null, content);
+                    return new Response(StatusCode.Redirect, "text/html", RedirectionPagePath, LoadDefaultPage(Configuration.RedirectionDefaultPageName));
                 }
-            }
-            //TODO: read the physical file
-            // Create OK response
-            else if (request.relativeURI != string.Empty)
-            {
-                if (File.Exists(Path.Combine(Configuration.RootPath, request.relativeURI)))
+
+                if (request.relativeURI == string.Empty)
                 {
-                    content = LoadPage(request.relativeURI);
+                    content = LoadDefaultPage(Configuration.MainPage);
                     return new Response(StatusCode.OK, contenttype, null, content);
                 }
                 else
                 {
-                    content = LoadPage(Configuration.NotFoundDefaultPageName);
-                    return new Response(StatusCode.NotFound, contenttype, null, content);
+                    string requestedFilePath = Path.Combine(Configuration.RootPath, request.relativeURI);
+                    if (File.Exists(requestedFilePath))
+                    {
+                        content = LoadDefaultPage(request.relativeURI);
+                        return new Response(StatusCode.OK, contenttype, null, content);
+                    }
+                    else
+                    {
+                        content = LoadDefaultPage(Configuration.NotFoundDefaultPageName);
+                        return new Response(StatusCode.NotFound, contenttype, null, content);
+                    }
                 }
+
             }
-            return new Response(StatusCode.InternalServerError, contenttype, null, content);
+            catch (Exception ex)
+            {
+                Logger.LogException(ex);
+                content = LoadDefaultPage(Configuration.InternalErrorDefaultPageName);
+                return new Response(StatusCode.InternalServerError, contenttype, null, content);
+            }
+
         }
 
 
@@ -251,15 +242,15 @@ namespace HTTPServer
             //read the file
             string path = Configuration.RootPath + "/" + Configuration.RequestBodyFileName;
             string file = File.ReadAllText(path);
+            //append the content to the html file
             file = file.Replace("<body>", "<body>" + "<h1>" + content + "</h1>" + "<br>");
             //write the file
             File.WriteAllText(path, file);
-
         }
-        private string LoadPage(string pageName)
+        private string LoadDefaultPage(string defaultPageName)
         {
-            string filePath = Path.Combine(Configuration.RootPath, pageName);
-            // TODO: check if filepath not exist log exception using Logger class and return empty string
+            string filePath = Path.Combine(Configuration.RootPath, defaultPageName);
+            // check if filepath not exist log exception using Logger class and return empty string
             if (!File.Exists(filePath))
             {
                 Logger.LogException(new FileNotFoundException("cannot find the file", filePath));
@@ -269,6 +260,16 @@ namespace HTTPServer
             return File.ReadAllText(filePath);
         }
 
+
+        private string GetRedirectionPagePathIFExist(string relativePath)
+        {
+            // using Configuration.RedirectionRules return the redirected page path if exists else returns empty
+            if (Configuration.RedirectionRules.ContainsKey(relativePath))
+            {
+                return Configuration.RedirectionRules[relativePath];
+            }
+            return string.Empty;
+        }
         private void LoadRedirectionRules(string filePath)
         {
             try
@@ -287,7 +288,6 @@ namespace HTTPServer
             }
             catch (Exception ex)
             {
-                // TODO: log exception using Logger class
                 Logger.LogException(ex);
                 Environment.Exit(1);
             }

@@ -11,9 +11,14 @@ namespace HTTPServer
         static StreamWriter sr = new StreamWriter("log.txt");
         public static void LogException(Exception ex)
         {
-            DateTime now = DateTime.Now;
-            sr.WriteLine(now.ToString() + ": " + ex.Message);
-            sr.Flush();
+
+            lock ("log.txt")
+            {
+                DateTime now = DateTime.Now;
+                sr.WriteLine(now.ToString() + ": " + ex.Message);
+                sr.Flush();
+            }
+
         }
     }
 }

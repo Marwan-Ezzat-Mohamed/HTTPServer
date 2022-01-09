@@ -58,14 +58,13 @@ namespace HTTPServer
             // Validate blank line exists
 
             // Load header lines into HeaderLines dictionary
-            
+
             if (ParseRequestLine() && LoadHeaderLines() && ValidateBlankLine())
             {
-
                 return true;
             }
-            else
-                return false;
+
+            return false;
         }
 
         private bool ParseRequestLine()
@@ -132,9 +131,9 @@ namespace HTTPServer
 
         private bool ValidateBlankLine()
         {
-            for (int i = 0; i < requestString.Length; i++)
+            for (int i = 0; i < requestString.Length-3; i++)
             {
-                if (requestString[i] == '\r' && requestString[i + 1] == '\n')
+                if (requestString[i] == '\r' && requestString[i + 1] == '\n'&& requestString[i+2] == '\r' && requestString[i + 3] == '\n')
                 {
                     return true;
                 }

@@ -13,10 +13,8 @@ namespace HTTPServer
             // TODO: Call CreateRedirectionRulesFile() function to create the rules of redirection 
             CreateRedirectionRulesFile();
 
-
-            //Start server
             // 1) Make server object on port 1000
-            Server server = new Server(1000, "C:\\Users\\Raghd Khaled\\source\\repos\\HTTPServer\\HTTPServer\\bin\\Debug\\redirectionRules.txt");
+            Server server = new Server(1000, "C:\\Users\\MarwanEzzat\\source\\repos\\HTTPServer\\HTTPServer\\bin\\Debug\\redirectionRules.txt");
 
             // 2) Start Server
             server.StartServer();
@@ -26,7 +24,7 @@ namespace HTTPServer
         {
             //Create file named redirectionRules.txt
             StreamWriter sw = new StreamWriter("redirectionRules.txt");
-            //Write the rules of redirection
+            //Write the rules of redirection to the file
             sw.WriteLine("aboutus0.html,aboutus2.html");
             sw.Close();
             // each line in the file specify a redirection rule
