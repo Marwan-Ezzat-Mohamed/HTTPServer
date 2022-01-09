@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
+
 namespace HTTPServer
 {
     class Logger
@@ -12,13 +13,17 @@ namespace HTTPServer
         public static void LogException(Exception ex)
         {
 
-            lock ("log.txt")
+
+            LockManager.GetLock("log.txt", () =>
             {
                 DateTime now = DateTime.Now;
                 sr.WriteLine(now.ToString() + ": " + ex.Message);
                 sr.Flush();
-            }
+            });
+
 
         }
+
+
     }
 }
